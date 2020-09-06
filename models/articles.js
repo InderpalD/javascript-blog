@@ -1,4 +1,9 @@
 const mongoose = require('mongoose')
+const marked = require('marked')
+const slugify = require('slugify')
+const createDomPurify = require('dompurify')
+const {JSDOM} = require('jsdom')
+const dompurify = createDomPurify(new JSDOM().window)
 
 //define schema
 const articleSchema = new mongoose.Schema({
@@ -16,9 +21,30 @@ const articleSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    slug: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    sanitizedHtml: {
+        type: String,
+        required: true
     }
 
 });
+
+// call this function when a model is created
+articleSchema.pre('validate', function(next){
+    if(this.title) {
+        this.slug = slugify(this.title, {lower: true, strict:true})
+    }
+
+    if (this.markdown) {
+        this.sanitizedHtml = dompurify.sanitize(marked(this.markdown))
+    }
+    next()
+})
 
 
 // create db table called Article with the above columns
