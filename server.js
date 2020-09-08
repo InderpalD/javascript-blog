@@ -1,15 +1,18 @@
 const express = require('express')
 const mongoose = require('mongoose')
-const ArticleTable = require('./models/articles')
-const app = express()
-const articleRouter = require('./routes/articles')
 const methodOverride = require('method-override')
+const ArticleTable = require('./models/articles')
+const articleRouter = require('./routes/articles')
 
-// Purpose of a view engine is to generate html server side instead of in a static html file
-// You'll see that variables defined here can be used in ejs files to write html
-// Also you can straight up run js code, even without outputing (<%= vs <% )
-app.set('view engine', 'ejs')
+const app = express()
 app.listen(5000)
+
+/**  
+ * Purpose of a view engine is to generate html server side instead of in a static html file
+ * You'll see that variables defined here can be used in ejs files to write html
+ * Also you can run js code, even without outputing (<%= vs <% )
+ */
+app.set('view engine', 'ejs')
 
 // Allows us to get specific attributes from req objects in http methods
 app.use(express.urlencoded({extended: false}))
@@ -21,12 +24,17 @@ app.use(methodOverride('_method'))
 mongoose.connect('mongodb://localhost/blog_db', {
      useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true })
 
+/**
+ * Render the Home page when receiving a GET request for default route
+ */
 app.get('/', async (req, res) => {
     const articles = await ArticleTable.find().sort({createdAt:'desc'})
-    
-    res.render('articles/index', { articles:articles})
+    // render articles/index view and pass articles (from db) as local var
+    res.render('articles/index', {articles:articles})
 });
 
-// putting this router last because it has to be after url encoder gets used 
-//Mount the path 'articles' and then every articleRouter.METHOD will follow as a subpath
+/**
+ * Mount the path 'articles' and then every route from articles.js will come after /articles/ endpoint
+ * Putting this router last because it has to be after url encoder gets used.
+ */
 app.use('/articles', articleRouter)
